@@ -1,9 +1,23 @@
 from django.urls import path
-#from .views import ResumeView, ResumeUpdateView, SavingTypesView
+from .views      import (
+                    AllItems, 
+                    WhichCategory, 
+                    WhichBrand, 
+                    WhichColor, 
+                    WhichSize,
+                    CustomFoundation,
+                    ProductDetailView,
+                    SizeDetailView)
 
 urlpatterns = [
- #   path('', ResumeView.as_view()),
-  #  path('/<int:resume_id>', ResumeUpdateView.as_view()),
-#    path('/savingtype', SavingTypesView.as_view())
-]
+    path('', AllItems.as_view()),
+    path('/category', WhichCategory.as_view()),
+    path('/brand', WhichBrand.as_view()),
+    path('/size', WhichSize.as_view()),
+    path('/color', WhichColor.as_view()),
+#    path('<int:category_id>', ItemsForCategory.as_view()),
+    path('/sideimage/<int:product_id>', CustomFoundation.as_view()),
+    path('/<int:product_id>', ProductDetailView.as_view()),
+    path('/sizedetail/<int:product_id>', SizeDetailView.as_view())
+    ]
 

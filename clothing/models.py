@@ -1,3 +1,4 @@
+
 from django.db import models
 
 
@@ -7,11 +8,12 @@ from django.db import models
 class BasicProducts(models.Model):
     product_name      = models.CharField(max_length=100)
     price             = models.DecimalField(max_digits=8, decimal_places=2)
-    category          = models.ForeignKey('Categories', on_delete=models.CASCADE)
-    brand             = models.ForeignKey('Brands', on_delete=models.CASCADE)
-    available_color   = models.ManyToManyField('Colors', through='AvailableColors')
-    available_size_unit = models.ManyToManyField('SizeUnits', through='AvailableSizeUnits')
-    
+    category          = models.ForeignKey('Categories', on_delete=models.CASCADE, null=True)
+    brand             = models.ForeignKey('Brands', on_delete=models.CASCADE, null=True)
+    available_color   = models.ManyToManyField('Colors', through='AvailableColors', null=True)
+    available_size_unit = models.ManyToManyField('SizeUnits', through='AvailableSizeUnits', null=True )
+    available_part = models.ManyToManyField('Parts', through='AvailableParts', null=True)
+
     class Meta:
         db_table = 'basic_products'
 
@@ -42,8 +44,8 @@ class SizeUnits(models.Model) :
 
 
 class AvailableSizeUnits(models.Model) :
-    size_unit = models.ForeignKey(SizeUnits, on_delete=models.CASCADE)
-    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE)
+    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE, null=True)
+    size_unit = models.ForeignKey(SizeUnits, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'available_size_units'
@@ -60,8 +62,8 @@ class Colors(models.Model) :
 
 # 상품명에 따라 사용 가능 색상이 달라짐
 class AvailableColors(models.Model) :
-    color         = models.ForeignKey(Colors, on_delete=models.CASCADE)
-    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE)
+    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE, null=True)
+    color         = models.ForeignKey(Colors, on_delete=models.CASCADE, null=True)
     
     class Meta:
         db_table = 'available_colors'
@@ -72,24 +74,24 @@ class AvailableColors(models.Model) :
 # 폰케이스 : 전면 * 상품명별 생김새 * 사용 가능 색상
 
 class SideNames(models.Model) :
-    side_name = models.CharField(max_length=20)
+    side_name = models.CharField(max_length=20, null=True)
 
     class Meta:
         db_table = 'side_names'
 
 
 class AvailableSideNames(models.Model) :
-    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
-    side_name = models.ForeignKey(SideNames, on_delete=models.CASCADE)
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE, null=True)
+    side_name = models.ForeignKey(SideNames, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'available_side_names'
 
 
 class SideImages(models.Model) :
-    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE)
-    available_side_names = models.ForeignKey(AvailableSideNames, on_delete=models.CASCADE)
-    available_color = models.ForeignKey(AvailableColors, on_delete=models.CASCADE)
+    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE, null=True)
+    side_name = models.ForeignKey(SideNames, on_delete=models.CASCADE, null=True)
+    color = models.ForeignKey(Colors, on_delete=models.CASCADE, null=True)
     side_image      = models.URLField(max_length=3000)
 
     class Meta:
@@ -99,10 +101,8 @@ class SideImages(models.Model) :
 #==========상세 사이즈 조견표 view 생성에 쓰일 테이블=========
 
 # part 사이즈 측정 위치
-# 의류 : 상품 카테고리에 따라 범위 다름 / 폰케이스 : 상품 타입에 따라 모두 동일
-# ex 후드 : 총기장, 어깨넓이, 가슴둘레, 소매길이
-# ex 아우터 : 총기장, 어깨넓이, 가슴둘레, 소매길이, 밑단
-# ex 폰케이스 : 가로, 세로
+# 의류 : 상품명에 따라 측정 부위 다름
+# 폰케이스 : 상품타입에 따라 가로, 세로로 고정적임.
 class Parts(models.Model) :
     part = models.CharField(max_length=20)
     
@@ -110,25 +110,19 @@ class Parts(models.Model) :
         db_table = 'parts'
 
 
-class PartsForCategories(models.Model):
-    category = models.ForeignKey(Categories, on_delete=models.CASCADE) 
-    part     = models.ForeignKey(Parts, on_delete=models.CASCADE)
+class AvailableParts(models.Model):
+    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE, null=True) 
+    part = models.ForeignKey(Parts, on_delete=models.CASCADE, null=True)
     
     class Meta:
-        db_table = 'parts_for_categories'
+        db_table = 'available_parts'
 
-
-class SizeSorters(models.Model) :
-    part_for_category = models.ForeignKey(PartsForCategories, on_delete=models.CASCADE)
-    available_size_unit = models.ForeignKey(AvailableSizeUnits, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'size_sorters'
 
 class SizeFiguresForProducts(models.Model) :
-    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE)
-    size_sorter = models.ForeignKey(SizeSorters, on_delete=models.CASCADE)
-    size_figure  = models.IntegerField()
+    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE, null=True)
+    part = models.ForeignKey(Parts, on_delete=models.CASCADE, null=True)
+    size_unit = models.ForeignKey(SizeUnits, on_delete=models.CASCADE, null=True )
+    size_figure  = models.CharField(max_length=20)
     
     class Meta:
         db_table = 'size_figures_for_products'
@@ -136,33 +130,10 @@ class SizeFiguresForProducts(models.Model) :
 
 #==========제품 상세정보 view 생성을 위한 테이블 ======== 
 
-
-# 의류 : 소재, 카테고리에 따라/ 폰케이스 : 상품 카테고리에 따라 취급 주의사항이 달라짐
-# 아우터 : 다림질 관련 내용 없음
-# 소재비중 : 손세탁, 이염주의 / 드라이클리닝
-class Cares(models.Model) :
-    description = models.TextField() 
-   
-    class Meta:
-        db_table = 'cares'
-
-
-# 피팅모델 정보
-class FittingModels(models.Model) :
-    gender = models.CharField(max_length=10)
-    height = models.IntegerField()
-    top    = models.IntegerField()
-    waist  = models.IntegerField()
-    shoe   = models.IntegerField()
-
-    class Meta:
-        db_table = 'fitting_models'
-
-
 #of 소재, by 회사, in 나라
 # 상품명에 따라 상세 정보가 달라짐
 class ProductInfo(models.Model) :
-    basic_product  = models.ForeignKey(BasicProducts, on_delete=models.CASCADE)
+    basic_product  = models.ForeignKey(BasicProducts, on_delete=models.CASCADE, null=True)
     description    = models.CharField(max_length=100)
     made_of        = models.CharField(max_length=20)
     made_by        = models.CharField(max_length=20)
@@ -170,17 +141,16 @@ class ProductInfo(models.Model) :
     elasticity     = models.CharField(max_length=20)
     texture        = models.CharField(max_length=20)
     thickness      = models.CharField(max_length=20)
-    care           = models.ForeignKey(Cares, on_delete=models.CASCADE)
-    fitting_models = models.ForeignKey(FittingModels, on_delete=models.CASCADE)
-    fitting_info   = models.CharField(max_length=20)
+    care           = models.CharField(max_length=500)
+    fitting_info   = models.CharField(max_length=200)
 
     class Meta:
         db_table = 'product_info'
 
 
 class ModelImages(models.Model) :
+    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE, null=True)
     model_image   = models.URLField(max_length=3000)
-    basic_product = models.ForeignKey(BasicProducts, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'model_images'
