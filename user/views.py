@@ -21,7 +21,7 @@ class KakaoLoginView(View):
             
             kakao_response = requests.get(url, headers = headers)
             kakao_response = kakao_response.json()
-            kakao          = SocialPlatform.objects.get(id = 1)
+            kakao          = SocialPlatform.objects.get(platform_name='kakao')
             
             if User.objects.filter(social_platform = kakao, platform_id = kakao_response['id']).exists():
 
