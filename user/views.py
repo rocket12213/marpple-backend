@@ -9,6 +9,7 @@ from .models            import SocialPlatform, User
 from wemarpple.settings import SECRET_KEY
 
 class KakaoLoginView(View):
+
     def get(self, request):
         try:
             access_token = request.headers.get('Authorization', None)
@@ -19,8 +20,8 @@ class KakaoLoginView(View):
                            }
             
             kakao_response = requests.get(url, headers = headers)
-            kakao_response = json.loads(kakao_response.text)
-            kakao          = SocialPlatform.objects.get(platform_name='kakao')
+            kakao_response = kakao_response.json()
+            kakao          = SocialPlatform.objects.get(id = 1)
             
             if User.objects.filter(social_platform = kakao, platform_id = kakao_response['id']).exists():
 
@@ -45,9 +46,9 @@ class KakaoLoginView(View):
 
             return JsonResponse(
                             {
-                                'id'    : f'{user.id}',
-                                'name'  : f'{user.name}',
-                                'token' : f'{jwt_token}',
+                                'id'        : f'{user.id}',
+                                'name'      : f'{user.name}',
+                                'jwt_token' : f'{jwt_token}',
                             }, status = 200)
         except KeyError:
             return JsonResponse({'message':'WRONG_KEY'}, status = 400)
